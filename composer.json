@@ -1,0 +1,35 @@
+{
+  "name": "robiningelbrecht/notion-charts",
+  "keywords": [
+    "Notion",
+    "Charts"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Robin Ingelbrecht",
+      "email": "ingelbrecht_robin@hotmail.com"
+    }
+  ],
+  "require": {
+    "php": "^8.1",
+    "guzzlehttp/guzzle": "^7.5",
+    "mariosimao/notion-sdk-php": "^0.6.2",
+    "php-di/php-di": "^6.4",
+    "slim/psr7": "^1.5",
+    "slim/slim": "^4.10",
+    "twig/twig": "^3.4",
+    "vlucas/phpdotenv": "^5.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "scripts": {
+    "dev": "php -S localhost:8080 -t api api/index.php"
+  }
+}
