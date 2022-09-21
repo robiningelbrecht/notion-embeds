@@ -17,7 +17,7 @@ $dotenv->safeLoad();
 
 $twig = new Environment(new FilesystemLoader(dirname(__DIR__) . '/templates'));
 
-$app->get('/salary', function (ServerRequestInterface $request, ResponseInterface $response) use ($twig) {
+$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) use ($twig) {
     $notion = Notion::create($_ENV['NOTION_API_SECRET']);
 
     $database = $notion->databases()->find($_ENV['NOTION_DATABASE_SALARY']);
