@@ -1,4 +1,4 @@
-<div class="chart-container" style="position: relative; height:100vh; width:100%">
+<div class="chart-container" style="position: relative; height:95vh; width:100%">
     <canvas id="myChart"></canvas>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -8,17 +8,53 @@
         type: 'line',
         data: {
             labels: {{ labels | raw }},
-            datasets: [{
-                data: {{ data | raw }},
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.4
-            }],
+            datasets: [
+                {% for dataset in datasets %}
+                {
+                    label: '{{ dataset.label | raw }}',
+                    data: {{ dataset.data | raw }},
+                    fill: false,
+                    borderColor: '{{ dataset.borderColor | raw }}',
+                    backgroundColor: '{{ dataset.borderColor | raw }}',
+                    tension: 0.4,
+                    pointRadius: 2,
+                    hidden: {{ dataset.hidden | raw }},
+                },
+                {% endfor %}
+            ],
         },
         options: {
             plugins: {
                 legend: {
-                    display: false
+                    display: true
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('en-US', {
+                                    style: 'currency',
+                                    currency: 'EUR'
+                                }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        // Include a dollar sign in the ticks
+                        callback: function (value, index, ticks) {
+                            return '€' + value;
+                        }
+                    }
                 }
             }
         }

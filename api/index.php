@@ -32,13 +32,31 @@ $app->get('/salary', function (ServerRequestInterface $request, ResponseInterfac
         /** @var \Notion\Pages\Properties\PropertyInterface[] $properties */
         $properties = $page->properties();
         $labels[] = $properties['Month']->start()->format('F Y');
-        $data[] = $properties['Gross salary']->number();
+
+        $data['gross'][] = $properties['Gross salary']->number();
+        $data['net'][] = $properties['Net salary']->number();
     }
+
+    $datasets = [
+        [
+            'borderColor' => '#36a2eb',
+            'label' => 'Gross',
+            'data' => '[' . implode(',', $data['gross']) . ']',
+            'hidden' => 'true',
+        ],
+        [
+            'borderColor' => '#ffce56',
+            'label' => 'Net',
+            'data' => '[' . implode(',', $data['net']) . ']',
+            'hidden' => 'false',
+        ],
+    ];
 
     $response->getBody()->write($twig->render('salary-chart.html.twig', [
         'labels' => '[' . implode(',', array_map(fn(string $label) => sprintf('"%s"', $label), $labels)) . ']',
-        'data' => '[' . implode(',', $data) . ']',
+        'datasets' => $datasets,
     ]));
+
     return $response;
 });
 
