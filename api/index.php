@@ -13,7 +13,9 @@ $app = AppFactory::create();
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->safeLoad();
 
-$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) {
+$twig = new \Twig\Environment(new \Twig\Loader\FilesystemLoader(dirname(__DIR__) . '/templates'));
+
+$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) use($twig) {
     $notion = Notion::create($_ENV['NOTION_API_SECRET']);
 
     $database = $notion->databases()->find($_ENV['NOTION_DATABASE_SALARY']);
@@ -31,12 +33,10 @@ $app->get('/', function (ServerRequestInterface $request, ResponseInterface $res
                 'Notion\Pages\Properties\Title' => $property->toString(),
                 default => $property->toArray()[$property->property()->type()],
             };
-
-            var_dump($value);
         }
     }
 
-    $response->getBody()->write('');
+    $response->getBody()->write($twig->render('salary-chart.html.twig'));
     return $response;
 });
 
