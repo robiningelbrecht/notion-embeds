@@ -17,7 +17,7 @@ $dotenv->safeLoad();
 
 $twig = new Environment(new FilesystemLoader(dirname(__DIR__) . '/templates'));
 
-$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) use ($twig) {
+$app->get('/salary', function (ServerRequestInterface $request, ResponseInterface $response) use ($twig) {
     $notion = Notion::create($_ENV['NOTION_API_SECRET']);
 
     $database = $notion->databases()->find($_ENV['NOTION_DATABASE_SALARY']);
@@ -31,11 +31,9 @@ $app->get('/', function (ServerRequestInterface $request, ResponseInterface $res
     foreach ($result->pages() as $page) {
         /** @var \Notion\Pages\Properties\PropertyInterface[] $properties */
         $properties = $page->properties();
-        $labels[] = $properties['Month']->start()->format('Y m');
+        $labels[] = $properties['Month']->start()->format('F Y');
         $data[] = $properties['Gross salary']->number();
     }
-
-    //var_dump($labels);
 
     $response->getBody()->write($twig->render('salary-chart.html.twig', [
         'labels' => '[' . implode(',', array_map(fn(string $label) => sprintf('"%s"', $label), $labels)) . ']',
