@@ -1,63 +1,58 @@
 <?php
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use App\Controller\SalaryEvolutionChartController;
+use App\Controller\CostIncomeSummaryController;
+use App\ValueObject\Notion\NotionSalaryDatabaseId;
+use App\ValueObject\Notion\NotionMonthlyExpensesDatabaseId;
+use App\ValueObject\Notion\NotionInvestmentsDatabaseId;
 use Notion\Notion;
-use Notion\Databases\Query;
+use Psr\Http\Server\RequestHandlerInterface;
+use Slim\Factory\AppFactory;
+use Slim\Psr7\Response;
+use Slim\Psr7\Request;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
-use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$app = AppFactory::create();
-
+// Load env file.
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->safeLoad();
 
-$twig = new Environment(new FilesystemLoader(dirname(__DIR__) . '/templates'));
+// Build DI config.
+$builder = new DI\ContainerBuilder();
+$builder->addDefinitions([
+    FilesystemLoader::class => DI\create(FilesystemLoader::class)->constructor(dirname(__DIR__) . '/templates'),
+    Environment::class => DI\create(Environment::class)->constructor(DI\get(FilesystemLoader::class)),
+    Notion::class => Notion::create($_ENV['NOTION_API_SECRET']),
+    NotionSalaryDatabaseId::class => NotionSalaryDatabaseId::fromString($_ENV['NOTION_DATABASE_SALARY']),
+    NotionMonthlyExpensesDatabaseId::class => NotionMonthlyExpensesDatabaseId::fromString($_ENV['NOTION_DATABASE_MONTHLY_EXPENSES']),
+    NotionInvestmentsDatabaseId::class => NotionInvestmentsDatabaseId::fromString($_ENV['NOTION_DATABASE_INVESTMENTS']),
+]);
 
-$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) use ($twig) {
-    $notion = Notion::create($_ENV['NOTION_API_SECRET']);
+// Create app.
+AppFactory::setContainer($builder->build());
+$app = AppFactory::create();
 
-    $database = $notion->databases()->find($_ENV['NOTION_DATABASE_SALARY']);
-    $result = $notion->databases()->query(
-        $database,
-        Query::create()->withAddedSort(Query\Sort::property("Month")->ascending()),
-    );
+// Configure routes.
+$app->get('/salary', SalaryEvolutionChartController::class . ':handle');
+$app->get('/cost-income-summary', CostIncomeSummaryController::class . ':handle');
 
-    /** @var \Notion\Pages\Page $page */
-    $labels = $data = [];
-    foreach ($result->pages() as $page) {
-        /** @var \Notion\Pages\Properties\PropertyInterface[] $properties */
-        $properties = $page->properties();
-        $labels[] = $properties['Month']->start()->format('F Y');
+// Add route middleware to ensure APP_SECRET is included in request.
+$app->add(function (Request $request, RequestHandlerInterface $requestHandler) {
+    $forbiddenResponse = new Response();
+    $forbiddenResponse->getBody()->write('YOU HAVE NO POWER HERE');
+    $forbiddenResponse->withStatus(400);
 
-        $data['gross'][] = $properties['Gross salary']->number();
-        $data['net'][] = $properties['Net salary']->number();
+    if (empty($request->getQueryParams()['APP_SECRET'])) {
+        return $forbiddenResponse;
     }
 
-    $datasets = [
-        [
-            'borderColor' => '#36a2eb',
-            'label' => 'Gross',
-            'data' => '[' . implode(',', $data['gross']) . ']',
-            'hidden' => 'true',
-        ],
-        [
-            'borderColor' => '#ffce56',
-            'label' => 'Net',
-            'data' => '[' . implode(',', $data['net']) . ']',
-            'hidden' => 'false',
-        ],
-    ];
+    if ($request->getQueryParams()['APP_SECRET'] != $_ENV['APP_SECRET']) {
+        return $forbiddenResponse;
+    }
 
-    $response->getBody()->write($twig->render('salary-chart.html.twig', [
-        'labels' => '[' . implode(',', array_map(fn(string $label) => sprintf('"%s"', $label), $labels)) . ']',
-        'datasets' => $datasets,
-    ]));
-
-    return $response;
+    return $requestHandler->handle($request);
 });
 
 $app->run();
