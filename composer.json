@@ -13,6 +13,7 @@
   ],
   "require": {
     "php": "^8.1",
+    "brick/money": "^0.6.0",
     "guzzlehttp/guzzle": "^7.5",
     "mariosimao/notion-sdk-php": "^0.6.2",
     "php-di/php-di": "^6.4",
