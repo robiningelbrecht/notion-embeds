@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\MoneyFormatter;
 use App\ValueObject\Notion\NotionInvestmentsDatabaseId;
 use App\ValueObject\Notion\NotionMonthlyExpensesDatabaseId;
 use App\ValueObject\Notion\NotionSalaryDatabaseId;
@@ -31,12 +32,12 @@ class CostIncomeSummaryController
         $totalExpenses = $this->getTotalExpensesFromNotion();
 
         $response->getBody()->write($this->twig->render('cost-income-summary.html.twig', [
-            'total_invested' => $this->getTotalInvestedFromNotion()->formatTo('nl_BE'),
-            'net_salary' => $netSalary->formatTo('nl_BE'),
-            'rent_lize' => $rentLize->formatTo('nl_BE'),
-            'total_income' => $netSalary->plus($rentLize)->formatTo('nl_BE'),
-            'total_expenses' => $totalExpenses->formatTo('nl_BE'),
-            'total_after_expenses' => $netSalary->minus($totalExpenses)->formatTo('nl_BE'),
+            'total_invested' => MoneyFormatter::format($this->getTotalInvestedFromNotion()),
+            'net_salary' => MoneyFormatter::format($netSalary),
+            'rent_lize' => MoneyFormatter::format($rentLize),
+            'total_income' => MoneyFormatter::format($netSalary->plus($rentLize)),
+            'total_expenses' => MoneyFormatter::format($totalExpenses),
+            'total_after_expenses' => MoneyFormatter::format($netSalary->minus($totalExpenses)),
         ]));
         return $response;
     }
