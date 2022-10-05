@@ -37,7 +37,7 @@ class CostIncomeSummaryController
             'rent_lize' => MoneyFormatter::format($rentLize),
             'total_income' => MoneyFormatter::format($netSalary->plus($rentLize)),
             'total_expenses' => MoneyFormatter::format($totalExpenses),
-            'total_after_expenses' => MoneyFormatter::format($netSalary->minus($totalExpenses)),
+            'total_after_expenses' => MoneyFormatter::format($netSalary->plus($rentLize)->minus($totalExpenses)),
         ]));
         return $response;
     }

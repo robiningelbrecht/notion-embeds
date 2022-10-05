@@ -1,0 +1,49 @@
+<div class="chart-container" style="position: relative; height:95vh; width:100%">
+    <canvas id="myChart"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('myChart');
+    const CHART_COLORS = {
+        red: 'rgb(255, 99, 132)',
+        orange: 'rgb(255, 159, 64)',
+        yellow: 'rgb(255, 205, 86)',
+        green: 'rgb(75, 192, 192)',
+        blue: 'rgb(54, 162, 235)',
+        purple: 'rgb(153, 102, 255)',
+        grey: 'rgb(201, 203, 207)'
+    };
+    const myChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: {{ labels | raw }},
+            datasets: [
+                {% for dataset in datasets %}
+                {
+                    label: '{{ dataset.label | raw }}',
+                    data: {{ dataset.data | raw }},
+                    backgroundColor: Object.values(CHART_COLORS),
+                },
+                {% endfor %}
+            ],
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Allocation'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return (context.label || '') + ': ' + context.parsed + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>

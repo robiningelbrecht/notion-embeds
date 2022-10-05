@@ -2,6 +2,7 @@
 
 use App\Controller\SalaryEvolutionChartController;
 use App\Controller\CostIncomeSummaryController;
+use App\Controller\InvestmentsChartController;
 use App\ValueObject\Notion\NotionSalaryDatabaseId;
 use App\ValueObject\Notion\NotionMonthlyExpensesDatabaseId;
 use App\ValueObject\Notion\NotionInvestmentsDatabaseId;
@@ -37,6 +38,7 @@ $app = AppFactory::create();
 // Configure routes.
 $app->get('/salary', SalaryEvolutionChartController::class . ':handle');
 $app->get('/cost-income-summary', CostIncomeSummaryController::class . ':handle');
+$app->get('/investment-allocation', InvestmentsChartController::class . ':handleAllocationChart');
 
 // Add route middleware to ensure APP_SECRET is included in request.
 $app->add(function (Request $request, RequestHandlerInterface $requestHandler) {
