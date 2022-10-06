@@ -39,6 +39,7 @@ $app = AppFactory::create();
 $app->get('/salary', SalaryEvolutionChartController::class . ':handle');
 $app->get('/cost-income-summary', CostIncomeSummaryController::class . ':handle');
 $app->get('/investment-allocation', InvestmentsChartController::class . ':handleAllocationChart');
+$app->get('/iwda-vs-emim', InvestmentsChartController::class . ':handleIwdaVsEmimChart');
 
 // Add route middleware to ensure APP_SECRET is included in request.
 $app->add(function (Request $request, RequestHandlerInterface $requestHandler) {

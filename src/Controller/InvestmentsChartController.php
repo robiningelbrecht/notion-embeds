@@ -28,10 +28,57 @@ class InvestmentsChartController
             Query::create(),
         );
 
-        /** @var \Notion\Pages\Page $page */
-        $labels = $investedPerTicker = [];
+        $labels = [];
         $totalInvested = 0;
-        foreach ($result->pages() as $page) {
+        $investedPerTicker = $this->calculatePercentagesPerTicker($result->pages(), $totalInvested, $labels);
+
+        $datasets = [
+            [
+                'data' => '[' . implode(',', $investedPerTicker) . ']',
+            ],
+        ];
+        $response->getBody()->write($this->twig->render('investment-pie-chart.html.twig', [
+            'title' => 'Allocation',
+            'labels' => '[' . implode(',', array_map(fn(string $label) => sprintf('"%s"', $label), $labels)) . ']',
+            'datasets' => $datasets,
+        ]));
+
+        return $response;
+    }
+
+    public function handleIwdaVsEmimChart(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $database = $this->notion->databases()->find($this->notionInvestmentsDatabaseId);
+        $result = $this->notion->databases()->query(
+            $database,
+            Query::create()->withFilter(Query\CompoundFilter::or(
+                Query\SelectFilter::property('Ticker')->equals('IWDA'),
+                Query\SelectFilter::property('Ticker')->equals('EMIM')
+            )),
+        );
+
+        $labels = [];
+        $totalInvested = 0;
+        $investedPerTicker = $this->calculatePercentagesPerTicker($result->pages(), $totalInvested, $labels);
+
+        $datasets = [
+            [
+                'data' => '[' . implode(',', $investedPerTicker) . ']',
+            ],
+        ];
+        $response->getBody()->write($this->twig->render('investment-pie-chart.html.twig', [
+            'title' => 'IWDA vs EMIM (88% - 12%)',
+            'labels' => '[' . implode(',', array_map(fn(string $label) => sprintf('"%s"', $label), $labels)) . ']',
+            'datasets' => $datasets,
+        ]));
+
+        return $response;
+    }
+
+    private function calculatePercentagesPerTicker(array $pages, int &$totalInvested, array &$labels): array
+    {
+        $investedPerTicker = [];
+        foreach ($pages as $page) {
             /** @var \Notion\Pages\Properties\PropertyInterface[] $properties */
             $properties = $page->properties();
             $tickerId = $properties['Ticker']->id();
@@ -52,16 +99,6 @@ class InvestmentsChartController
             $labels[$tickerId] .= ' (' . $percentage . '%)';
         }
 
-        $datasets = [
-            [
-                'data' => '[' . implode(',', $investedPerTicker) . ']',
-            ],
-        ];
-        $response->getBody()->write($this->twig->render('investment-allocation-chart.html.twig', [
-            'labels' => '[' . implode(',', array_map(fn(string $label) => sprintf('"%s"', $label), $labels)) . ']',
-            'datasets' => $datasets,
-        ]));
-
-        return $response;
+        return $investedPerTicker;
     }
 }
